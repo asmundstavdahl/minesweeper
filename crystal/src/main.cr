@@ -8,10 +8,7 @@ puts `date "+%F %T"`
 puts
 
 COMMANDS = [
-  Show.new(1, 1),
-  Show.new(2, 2),
-  Flag.new(3, 3),
-  Flag.new(4, 4),
+  Show.new(8, 8),
   Quit.new,
 ].each
 
