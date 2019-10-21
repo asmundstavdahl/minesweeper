@@ -13,12 +13,12 @@ COMMANDS = [
 ].each
 
 until game.over?
-  # command = get_next_command
-  command = COMMANDS.next
+  puts game.render
+  command = get_next_command
+  # command = COMMANDS.next
   case command
   when Command
     game.process command
-    puts game.render
   when Iterator::Stop
     puts "Good bye."
     break
@@ -26,5 +26,6 @@ until game.over?
 end
 
 if game.over?
+  puts game.render
   puts "Game over."
 end

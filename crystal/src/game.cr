@@ -9,13 +9,13 @@ class Game
   def initialize
     @game_over = false
 
-    ENV["cols"] ||= "20"
+    ENV["cols"] ||= "10"
     ENV["rows"] ||= "10"
-    ENV["bombs"] ||= "5"
+    ENV["bombs"] ||= "10"
 
     @cols = (ENV["cols"]?.not_nil!).to_i
     @rows = (ENV["rows"]?.not_nil!).to_i
-    @bombs = (ENV["bombs"]?.not_nil!).to_i
+    bombs = (ENV["bombs"]?.not_nil!).to_i
 
     @cells = ([[] of Cell] * @rows).map do |_|
       ([Cell.new] * @cols).map do |_|
@@ -23,14 +23,26 @@ class Game
       end
     end
 
-    bomb_xys = ([{-1, -1}] * @bombs).map { |_| {Random.rand(@cols), Random.rand(@rows)} }
+    bomb_xys = ([{-1, -1}] * bombs).map { |_| {Random.rand(@cols), Random.rand(@rows)} }
 
     bomb_xys.each do |xy|
       @cells[xy[1]][xy[0]].be_bomb!
     end
+
+    @bombs = @cells.flatten.reduce(0) do |acc, cell|
+      if cell.bomb?
+        acc + 1
+      else
+        acc
+      end
+    end
   end
 
   def over?
+    if @cells.flatten.any? { |c| c.bomb? && c.shown? }
+      @game_over = true
+    end
+
     @game_over
   end
 
@@ -40,7 +52,7 @@ class Game
     when Quit
       @game_over = true
     when Flag
-      @cells[command.x][command.y].flag!
+      @cells[command.y][command.x].flag!
     when Show
       self.show(command.x, command.y)
     else
@@ -49,7 +61,12 @@ class Game
   end
 
   def render
-    puts "  " + (0...@cols).join " "
+    col_digits = Math.log10(@cols).ceil.to_i
+    row_digits = Math.log10(@rows).ceil.to_i
+    (0...col_digits).each do |digit|
+      relevant_digits = (0...@cols).map { |col| sprintf("%#{col_digits}d", col)[digit] }
+      puts (" " * (row_digits + 1)) + relevant_digits.join " "
+    end
 
     @cells.each.with_index do |row, row_number|
       cells_rendered = ["?"] * @cols
@@ -58,7 +75,7 @@ class Game
         cells_rendered[col_number] = self.render_cell(col_number, row_number)
       end
 
-      puts row_number.to_s + " " + cells_rendered.join " "
+      puts sprintf("%#{row_digits}d", row_number) + " " + cells_rendered.join " "
     end
   end
 
@@ -67,15 +84,20 @@ class Game
 
     if cell.shown?
       if cell.bomb?
-        "B"
+        "\e[1;31mB\e[0m"
       else
-        self.count_bombs_around(x, y).to_s
+        adjacent_bombs = self.count_bombs_around(x, y)
+        if adjacent_bombs == 0
+          "\e[2m0\e[0m"
+        else
+          adjacent_bombs.to_s
+        end
       end
     else
       if cell.flagged?
-        "F"
+        "\e[2;7mF\e[0m"
       else
-        "?"
+        "\e[2m?\e[0m"
       end
     end
   end
