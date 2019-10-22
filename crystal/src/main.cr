@@ -3,9 +3,14 @@ require "./input"
 
 game = Game.new
 
-puts
-puts `date "+%F %T"`
-puts
+ARGV.each do |arg|
+  case arg
+  when "-c", "--compact"
+    game.separate_columns_with ""
+  else
+    puts "Unknown parameter '#{arg}'"
+  end
+end
 
 COMMANDS = [
   Show.new(8, 8),

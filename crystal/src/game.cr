@@ -9,6 +9,7 @@ class Game
 
   def initialize
     @game_over = false
+    @column_separator = " "
 
     ENV["cols"] ||= "10"
     ENV["rows"] ||= "10"
@@ -27,7 +28,7 @@ class Game
     bomb_xys = ([{-1, -1}] * bombs).map { |_| {Random.rand(@cols), Random.rand(@rows)} }
 
     bomb_xys.each do |xy|
-      @cells[xy[1]][xy[0]].be_bomb!
+      cell_at(xy[0], xy[1]).be_bomb!
     end
 
     @bombs = @cells.flatten.reduce(0) do |acc, cell|
@@ -63,9 +64,9 @@ class Game
     when Quit
       @game_over = true
     when Flag
-      @cells[command.y][command.x].flag!
+      cell_at(command.x, command.y).flag!
     when Show
-      if @cells[command.y][command.x].flagged?
+      if cell_at(command.x, command.y).flagged?
         puts "Toggle flag first!"
       else
         self.show(command.x, command.y)
@@ -73,6 +74,8 @@ class Game
     else
       puts "No implementation for " + typeof(command).to_s
     end
+  rescue ex : IndexError
+    puts ex
   end
 
   def render
@@ -80,7 +83,7 @@ class Game
     row_digits = Math.log10(@rows).ceil.to_i
     (0...col_digits).each do |digit|
       relevant_digits = (0...@cols).map { |col| sprintf("%#{col_digits}d", col)[digit] }
-      puts (" " * (row_digits + 1)) + relevant_digits.join " "
+      puts (" " * (row_digits)) + @column_separator + relevant_digits.join @column_separator
     end
 
     @cells.each.with_index do |row, row_number|
@@ -90,26 +93,30 @@ class Game
         cells_rendered[col_number] = self.render_cell(col_number, row_number)
       end
 
-      puts sprintf("%#{row_digits}d", row_number) + " " + cells_rendered.join " "
+      puts sprintf("%#{row_digits}d", row_number) + @column_separator + cells_rendered.join @column_separator
     end
   end
 
+  def separate_columns_with(separator)
+    @column_separator = separator
+  end
+
   private def render_cell(x, y) : String
-    cell = @cells[y][x]
+    cell = self.cell_at(x, y)
 
     game_over = self.won? || @game_over
 
     case {game_over, cell.shown?, cell.flagged?, cell.bomb?}
     when {false, false, false, _}
-      "\e[2m?\e[0m"
+      "\e[2m·\e[0m"
     when {false, false, true, _}
-      "\e[1;32mF\e[0m"
+      "\e[1m⚑\e[0m"
     when {_, true, _, true}
-      "\e[1;31mB\e[0m"
+      "\e[1;31m💥\e[0m"
     when {true, false, false, true}
-      "\e[33mB\e[0m"
+      "\e[33m💣\e[0m"
     when {true, false, true, true}
-      "\e[32mB\e[0m"
+      "\e[32m💣\e[0m"
     else
       adjacent_bombs = self.count_bombs_around(x, y)
       color = case cell
@@ -140,7 +147,7 @@ class Game
         (0...@rows).each do |y|
           if y >= target_y - 1 && y <= target_y + 1
             if x != target_x || y != target_y
-              yield @cells[y][x], x, y
+              yield self.cell_at(x, y), x, y
             end
           end
         end
@@ -149,7 +156,7 @@ class Game
   end
 
   private def show(x, y)
-    @cells[y][x].show!
+    self.cell_at(x, y).show!
     if count_bombs_around(x, y) == 0
       for_each_cell_around(x, y) do |cell, adjacent_x, adjacent_y|
         if !cell.shown?
@@ -157,6 +164,10 @@ class Game
         end
       end
     end
+  end
+
+  private def cell_at(x, y)
+    @cells[y][x]
   end
 end
 

@@ -1,6 +1,7 @@
 require "./game"
 
 def get_next_command : Command
+  printf(">> ")
   line = gets(true) || ""
 
   re = /(?<action>q(uit)?|f(lag)?|s(how)?|)(\s*(?<x>\d+)[ ,.+-\/](?<y>\d+)\s*)?/
