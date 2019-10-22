@@ -65,7 +65,11 @@ class Game
     when Flag
       @cells[command.y][command.x].flag!
     when Show
-      self.show(command.x, command.y)
+      if @cells[command.y][command.x].flagged?
+        puts "Toggle flag first!"
+      else
+        self.show(command.x, command.y)
+      end
     else
       puts "No implementation for " + typeof(command).to_s
     end
