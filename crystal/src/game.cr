@@ -5,6 +5,7 @@ class Game
   @cols : Int32
   @rows : Int32
   @bombs : Int32
+  @game_over : Bool
 
   def initialize
     @game_over = false
@@ -90,22 +91,30 @@ class Game
   private def render_cell(x, y) : String
     cell = @cells[y][x]
 
-    if cell.shown?
-      if cell.bomb?
-        "\e[1;31mB\e[0m"
+    if (self.won? || @game_over) && cell.bomb?
+      if cell.flagged?
+        "\e[32mB\e[0m"
       else
-        adjacent_bombs = self.count_bombs_around(x, y)
-        if adjacent_bombs == 0
-          "\e[2m0\e[0m"
-        else
-          adjacent_bombs.to_s
-        end
+        "\e[33mB\e[0m"
       end
     else
-      if cell.flagged?
-        "\e[2;7mF\e[0m"
+      if cell.shown?
+        if cell.bomb?
+          "\e[1;31mB\e[0m"
+        else
+          adjacent_bombs = self.count_bombs_around(x, y)
+          if adjacent_bombs == 0
+            "\e[2m0\e[0m"
+          else
+            adjacent_bombs.to_s
+          end
+        end
       else
-        "\e[2m?\e[0m"
+        if cell.flagged?
+          "\e[2;7mF\e[0m"
+        else
+          "\e[2m?\e[0m"
+        end
       end
     end
   end
