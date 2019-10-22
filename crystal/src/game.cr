@@ -51,7 +51,9 @@ class Game
     if @cells.flatten.reject(&.bomb?).all? &.shown?
       @cells.flatten.select(&.bomb?).none? &.shown?
     else
-      false
+      if @cells.flatten.select(&.bomb?).none? &.shown?
+        @cells.flatten.select(&.bomb?).all? &.flagged?
+      end
     end
   end
 
@@ -91,30 +93,29 @@ class Game
   private def render_cell(x, y) : String
     cell = @cells[y][x]
 
-    if (self.won? || @game_over) && cell.bomb?
-      if cell.flagged?
-        "\e[32mB\e[0m"
-      else
-        "\e[33mB\e[0m"
-      end
+    game_over = self.won? || @game_over
+
+    case {game_over, cell.shown?, cell.flagged?, cell.bomb?}
+    when {false, false, false, _}
+      "\e[2m?\e[0m"
+    when {false, false, true, _}
+      "\e[1;32mF\e[0m"
+    when {_, true, _, true}
+      "\e[1;31mB\e[0m"
+    when {true, false, false, true}
+      "\e[33mB\e[0m"
+    when {true, false, true, true}
+      "\e[32mB\e[0m"
     else
-      if cell.shown?
-        if cell.bomb?
-          "\e[1;31mB\e[0m"
-        else
-          adjacent_bombs = self.count_bombs_around(x, y)
-          if adjacent_bombs == 0
-            "\e[2m0\e[0m"
-          else
-            adjacent_bombs.to_s
-          end
-        end
+      adjacent_bombs = self.count_bombs_around(x, y)
+      color = case cell
+              when .flagged? then "\e[31m"
+              else                ""
+              end
+      if adjacent_bombs == 0
+        color + "\e[2m0\e[0m"
       else
-        if cell.flagged?
-          "\e[2;7mF\e[0m"
-        else
-          "\e[2m?\e[0m"
-        end
+        color + adjacent_bombs.to_s
       end
     end
   end
