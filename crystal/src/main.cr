@@ -19,7 +19,7 @@ COMMANDS = [
 
 until game.over? || game.won?
   puts game.render
-  command = get_next_command
+  command = get_next_command game.prompt
   # command = COMMANDS.next
   case command
   when Command

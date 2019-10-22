@@ -58,6 +58,13 @@ class Game
     end
   end
 
+  def prompt
+    n_shown = @cells.flatten.select(&.shown?).size
+    n_cells = @cols * @rows
+    n_flagged = @cells.flatten.select(&.flagged?).size
+    sprintf("%d/%d %d/%d [Sfq] >> ", n_shown, n_cells, n_flagged, @bombs)
+  end
+
   def process(command : Command)
     puts command
     case command

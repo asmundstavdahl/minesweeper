@@ -1,7 +1,7 @@
 require "./game"
 
-def get_next_command : Command
-  printf(">> ")
+def get_next_command(prompt) : Command
+  printf("%s", prompt)
   line = gets(true) || ""
 
   re = /(?<action>q(uit)?|f(lag)?|s(how)?|)(\s*(?<x>\d+)[ ,.+-\/](?<y>\d+)\s*)?/
@@ -17,13 +17,13 @@ def get_next_command : Command
       Show.new(match["x"].to_i, match["y"].to_i)
     else
       puts "Action not implemented: " + match["action"]
-      get_next_command
+      get_next_command prompt
     end
   else
     puts "Bad input: " + line
-    get_next_command
+    get_next_command prompt
   end
 rescue ex : KeyError
   puts ex
-  get_next_command
+  get_next_command prompt
 end
