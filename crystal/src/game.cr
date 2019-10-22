@@ -46,6 +46,14 @@ class Game
     @game_over
   end
 
+  def won?
+    if @cells.flatten.reject(&.bomb?).all? &.shown?
+      @cells.flatten.select(&.bomb?).none? &.shown?
+    else
+      false
+    end
+  end
+
   def process(command : Command)
     puts command
     case command

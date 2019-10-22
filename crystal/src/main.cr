@@ -12,7 +12,7 @@ COMMANDS = [
   Quit.new,
 ].each
 
-until game.over?
+until game.over? || game.won?
   puts game.render
   command = get_next_command
   # command = COMMANDS.next
@@ -25,7 +25,10 @@ until game.over?
   end
 end
 
-if game.over?
+if game.won?
+  puts game.render
+  puts "You win!"
+elsif game.over?
   puts game.render
   puts "Game over."
 end
