@@ -22,4 +22,7 @@ def get_next_command : Command
     puts "Bad input: " + line
     get_next_command
   end
+rescue ex : KeyError
+  puts ex
+  get_next_command
 end
