@@ -62,7 +62,7 @@ class Game
     n_shown = @cells.flatten.select(&.shown?).size
     n_cells = @cols * @rows
     n_flagged = @cells.flatten.select(&.flagged?).size
-    sprintf("%d/%d %d/%d [Sfq] >> ", n_shown, n_cells, n_flagged, @bombs)
+    sprintf("%d/%d %d/%d » ", n_shown, n_cells, n_flagged, @bombs)
   end
 
   def process(command : Command)
@@ -70,6 +70,10 @@ class Game
     case command
     when Quit
       @game_over = true
+    when Cheat
+      cheat()
+    when Help
+      usage()
     when Flag
       cell_at(command.x, command.y).flag!
     when Show
@@ -176,6 +180,28 @@ class Game
   private def cell_at(x, y)
     @cells[y][x]
   end
+
+  private def cheat
+    xys = (0...@cols).flat_map { |col| (0...@rows).map { |row| {col, row} } }
+
+    viable_xys = xys.reject do |xy|
+      cell = cell_at(xy[0], xy[1])
+      cell.bomb? || cell.shown?
+    end
+
+    xys_by_adj_bombs = viable_xys.sort { |a, b| count_bombs_around(a[0], a[1]) <=> count_bombs_around(b[0], b[1]) }
+
+    xy = xys_by_adj_bombs.first
+    process Show.new(xy[0], xy[1])
+  end
+
+  private def usage
+    puts "(s(how)) <x> <y>"
+    puts "f(lag) <x> <y>"
+    puts "h(elp)"
+    puts "q(uit)"
+    puts "\e[2mc(heat)\e[0m"
+  end
 end
 
 struct Quit
@@ -202,4 +228,10 @@ struct Show
   include Coordinate
 end
 
-alias Command = Quit | Flag | Show
+struct Cheat
+end
+
+struct Help
+end
+
+alias Command = Quit | Flag | Show | Cheat | Help
