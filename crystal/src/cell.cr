@@ -10,6 +10,10 @@ class Cell
     end
   end
 
+  def unflag!
+    @flagged = false
+  end
+
   def show!
     @shown = true
   end

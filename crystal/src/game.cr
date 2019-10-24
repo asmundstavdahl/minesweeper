@@ -75,13 +75,9 @@ class Game
     when Help
       usage()
     when Flag
-      cell_at(command.x, command.y).flag!
+      flag(command.x, command.y)
     when Show
-      if cell_at(command.x, command.y).flagged?
-        puts "Toggle flag first!"
-      else
-        self.show(command.x, command.y)
-      end
+      show(command.x, command.y)
     else
       puts "No implementation for " + typeof(command).to_s
     end
@@ -101,7 +97,7 @@ class Game
       cells_rendered = ["?"] * @cols
 
       row.each.with_index do |cell, col_number|
-        cells_rendered[col_number] = self.render_cell(col_number, row_number)
+        cells_rendered[col_number] = render_cell(col_number, row_number)
       end
 
       puts sprintf("%#{row_digits}d", row_number) + @column_separator + cells_rendered.join @column_separator
@@ -113,33 +109,36 @@ class Game
   end
 
   private def render_cell(x, y) : String
-    cell = self.cell_at(x, y)
+    cell = cell_at(x, y)
 
-    game_over = self.won? || @game_over
+    game_over = won? || @game_over
 
-    case {game_over, cell.shown?, cell.flagged?, cell.bomb?}
-    when {false, false, false, _}
-      "\e[2m·\e[0m"
-    when {false, false, true, _}
-      "\e[1m⚑\e[0m"
-    when {_, true, _, true}
-      "\e[1;31m💥\e[0m"
-    when {true, false, false, true}
-      "\e[33m💣\e[0m"
-    when {true, false, true, true}
-      "\e[32m💣\e[0m"
-    else
-      adjacent_bombs = self.count_bombs_around(x, y)
-      color = case cell
-              when .flagged? then "\e[31m"
-              else                ""
-              end
-      if adjacent_bombs == 0
-        color + "\e[2m0\e[0m"
-      else
-        color + adjacent_bombs.to_s
-      end
-    end
+    color = case
+            when x % 3 == 0, y % 3 == 0 then "\e[37m"
+            else                             ""
+            end
+
+    text = case {game_over, cell.shown?, cell.flagged?, cell.bomb?}
+           when {false, false, false, _}
+             "\e[2m·"
+           when {false, false, true, _}
+             "\e[1m⚑"
+           when {_, true, _, true}
+             "\e[1;31m💥"
+           when {true, false, false, true}
+             "\e[33m💣"
+           when {true, false, true, true}
+             "\e[32m💣"
+           else
+             adjacent_bombs = count_bombs_around(x, y)
+             if adjacent_bombs == 0
+               "\e[2m0"
+             else
+               adjacent_bombs.to_s
+             end
+           end
+
+    color + text + "\e[0m"
   end
 
   private def count_bombs_around(target_x, target_y)
@@ -158,7 +157,7 @@ class Game
         (0...@rows).each do |y|
           if y >= target_y - 1 && y <= target_y + 1
             if x != target_x || y != target_y
-              yield self.cell_at(x, y), x, y
+              yield cell_at(x, y), x, y
             end
           end
         end
@@ -167,11 +166,18 @@ class Game
   end
 
   private def show(x, y)
-    self.cell_at(x, y).show!
-    if count_bombs_around(x, y) == 0
-      for_each_cell_around(x, y) do |cell, adjacent_x, adjacent_y|
-        if !cell.shown?
-          self.show(adjacent_x, adjacent_y)
+    cell = cell_at(x, y)
+
+    if cell.flagged?
+      puts "Toggle flag first!"
+    else
+      cell.unflag!
+      cell.show!
+      if count_bombs_around(x, y) == 0
+        for_each_cell_around(x, y) do |cell, adjacent_x, adjacent_y|
+          if !cell.shown?
+            show(adjacent_x, adjacent_y)
+          end
         end
       end
     end
@@ -196,11 +202,21 @@ class Game
   end
 
   private def usage
-    puts "(s(how)) <x> <y>"
-    puts "f(lag) <x> <y>"
     puts "h(elp)"
-    puts "q(uit)"
     puts "\e[2mc(heat)\e[0m"
+    puts "q(uit)"
+    puts "f(lag) <x> <y>"
+    puts "(s(how)) <x> <y>"
+  end
+
+  private def flag(x, y)
+    cell = cell_at(x, y)
+
+    if cell.shown?
+      puts "#{x},#{y} already shown"
+    else
+      cell.flag!
+    end
   end
 end
 
