@@ -120,7 +120,7 @@ class Game
 
     text = case {game_over, cell.shown?, cell.flagged?, cell.bomb?}
            when {false, false, false, _}
-             "\e[2m·"
+             "\e[1m·"
            when {false, false, true, _}
              "\e[1m⚑"
            when {_, true, _, true}
@@ -132,7 +132,7 @@ class Game
            else
              adjacent_bombs = count_bombs_around(x, y)
              if adjacent_bombs == 0
-               "\e[2m0"
+               "\e[2m·"
              else
                adjacent_bombs.to_s
              end
